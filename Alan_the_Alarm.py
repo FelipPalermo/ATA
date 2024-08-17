@@ -1,8 +1,6 @@
-
-TOKEN = "MTI2ODk3Njc3MTI0NDc1MjkzNg.GAVOtN.8voHwMO6bC225sWfmiS6FHotZZUOGq0mkHVFTA"
-
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
+import os 
 import ssl
 import certifi
 import aiohttp
@@ -11,8 +9,9 @@ import re
 from datetime import datetime, timedelta
 from pymongo.mongo_client import MongoClient
 
+TOKEN = os.getenv("TOKEN")
+Uri = os.getenv("MongoDB_URI")
 
-Uri = "mongodb+srv://FelipePalermo:fsrKta0YGh0MPiH4@tarrasque.zslex2g.mongodb.net/?retryWrites=true&w=majority&appName=Tarrasque"
 Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Timer"]
 
 # Criar contexto SSL personalizado
@@ -29,26 +28,29 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix='al', intents=intents)
 
-@bot.event
-async def on_ready():
-    print(f'Logged in as {bot.user}')
-
 @bot.command(name="arm")
 async def alarm(ctx, *, time_message):
+
+
+# ----- /// PATTERN /// ------ 
     pattern = re.compile(r'^\d{2}:\d{2}:\d{2}$')
     pattern2 = re.compile(r"^\d{2}:\d{2}")
     pattern3 = re.compile(r"^\d{2}")
 
-    # Separar o tempo da mensagem usando ponto e vírgula como separador
-    if ';' in time_message:
-        time, message = time_message.split(';', 1)
+# ----- /// STRING MODIFICATION -----
+# ----- /// separes time from "Message" using (;) as split ----- ///
+
+    if ':' in time_message:
+        time, message = time_message.split(':', 1)
     else:
         time = time_message
-        message = "Alarm!"
+        message = "None"
 
+    # Remove blank sapces from the zeros 
     time = time.strip()
     message = message.strip()
     time = time.replace(" ", ":")
+    # -----------
 
     if pattern.match(time):
         h, m, s = map(int, time.split(':'))
@@ -67,14 +69,15 @@ async def alarm(ctx, *, time_message):
             await ctx.author.send(message)
             
             #TODO
-            # voice_client = await channel.connect()
-            # voice_client.play(discord.FFmpegPCMAudio('Alarm_Sound.mp3'), after=lambda e: print('done', e))
+            #TODO voice_client = await channel.connect()
+            #TODO voice_client.play(discord.FFmpegPCMAudio('Alarm_Sound.mp3'), after=lambda e: print('done', e))
 
-            await asyncio.sleep(10)
+            #TODO await asyncio.sleep(10)
             # TODO await voice_client.disconnect()
         else:
             f_time = now.strftime("%d/%m/%Y  |  %H:%M")
-            await ctx.author.send(f"You set an alarm for this moment. The alarm has been created {f_time}. Mensagem: {message}")
+            await ctx.author.send(f"You set an alarm for this moment. Mensagem : {message}")
+
 
     elif pattern2.match(time):
         m, s = map(int, time.split(':'))
@@ -114,7 +117,7 @@ async def alarm(ctx, *, time_message):
 
         if ctx.author.voice and ctx.author.voice.channel:
             await ctx.author.send(message)
-            channel = ctx.author.voice.channel
+            #channel = ctx.author.voice.channel
 
             #TODO
             # voice_client = await channel.connect()
@@ -142,7 +145,6 @@ async def stop(ctx):
 @bot.event
 async def send_late():
     documents = Client["Discord_Timers"].find()
-
     if documents > 1 : 
         for document in documents:
             if document["Status"] == False : 
@@ -155,12 +157,12 @@ async def send_late():
                 Client["Discord_Timers"].delete_one({"_id" : document["_id"]})
 
             else : pass 
-    else : pass 
-
+    else : 
+        pass 
 
 @bot.event
 async def on_ready():
-    send_late.start()  # Inicia o loop de tarefas
+    #send_late.start()  # Inicia o loop de tarefas
     print(f'Logged in as {bot.user.name}')
 
 bot.run(TOKEN)
