@@ -1,12 +1,13 @@
+from xml.dom.minidom import Document
 import certifi
 from pymongo.mongo_client import MongoClient
 from datetime import datetime
 import os
 from typing import Union
-
+from message_cryptography import  Cryptography
 
 # ----- /// MongoDB Connector /// -----
-Uri = os.getenv("MongoDB_URI")
+Uri = os.getenv("MONGODB_URI")
 Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"]
 
 now = datetime.now()
@@ -24,7 +25,7 @@ class mongo_ATA :
             "Discord_ID": Discord_ID,
             "Date_to_Send": date_to_send,
             "Created_At": now.strftime("%d-%m-%Y %H:%M"),
-            "Message": message,
+            "Message": Cryptography.encrypt(message),
             "Mailed": False,
             "Late" : "" 
         }
@@ -72,7 +73,6 @@ class mongo_ATA :
 
     @staticmethod
     def Signed_send_not_mailed() -> None : 
-
        # SIGNED = PEOPLE WHO HAVE EMAIL IN THE BOT 
 
         db = Client
@@ -100,20 +100,14 @@ class mongo_ATA :
             })
 
         try : 
-            print("dentro do try return_time")
             if last_message : 
 
-                print("last message exist")
                 last_message = str(last_message["Date_to_Send"])
                 last_message = datetime.strptime(last_message, "%d/%m %H:%M:%S")
-
-                print(last_message)
 
                 return last_message # type: ignore
 
             else : 
-
-                print("No Messages to Mail from this ID")
                 Client["Errors"].insert_one({
                     "Discord_ID" : Discord_ID,
                     "Error_Code" : 1,
@@ -150,14 +144,8 @@ class mongo_ATA :
         Discord_ID = str(Discord_ID)
 
         try : 
-            print("Dentro do try")
 
             send_at = mongo_ATA.Return_Time_to_Send(Discord_ID, Document_ID) # type: ignore
-            print('\n\n\n\n\n\n\n ----------------')
-
-            print(type(send_at))
-
-            print(send_at)
 
             last_message = Client["An_Timers"].find_one({
                     "_id" : Document_ID, 
@@ -165,11 +153,8 @@ class mongo_ATA :
                     "Mailed" : False
                     })
 
-            print("last message")#  
 
             if last_message : 
-
-                print("Dentro do IF last_message") 
 
                 time = datetime.now()
                 time = datetime.strftime(time, "%d/%m %H:%M:%S")
@@ -191,8 +176,6 @@ class mongo_ATA :
                                    "Late" : datetime.strftime(send_at, "%d/%m %H:%M:%S")}  # type: ignore
                                 })
 
-                    print("if send_at") 
-
                 else : 
                     print("Else") 
                     Client["An_Timers"].update_one(
@@ -201,8 +184,6 @@ class mongo_ATA :
                                   "Late" : "False"}
                                 })
                 
-                    print("Documento atualizado")
-
         except Exception as e: 
             print(f"Error : {e}")
             Client["Errors"].insert_one({
@@ -214,3 +195,12 @@ class mongo_ATA :
                     )
 
             return None 
+
+    @staticmethod
+    def active_alarms(Discord_ID) : 
+        alarms = Client["An_Timers"].find({
+        "Discord_ID" :str(Discord_ID),
+        "Mailed" : False 
+        })
+
+        return alarms

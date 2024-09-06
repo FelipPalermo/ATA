@@ -1,4 +1,4 @@
-#!/Users/felipepalermo/Desktop/ATA/venv/bin/python
+#!/Users/felipepalermo/Desktop/programacao/Projetos/ATA/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
