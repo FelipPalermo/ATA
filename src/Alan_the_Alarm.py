@@ -11,12 +11,16 @@ from pymongo.mongo_client import MongoClient
 from mongoDB import mongo_ATA
 
 # ----- /// TOKENS /// -----
-TOKEN = os.getenv("TOKEN")
-Uri = os.getenv("MONGODB_URI")
+TOKEN = os.getenv("ATA_TOKEN")
+Uri = os.getenv("mongodb://localhost:27017/")
 
 # ----- /// Connections /// -----
-Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"]
+Client = MongoClient(Uri, ssl=False)["Alan_the_Alarm"]
 ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+# se conectar com cloud precisa do tlsCAFile e nao pode ter ssl=False 
+# Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"] 
+
 
 class CustomConnector(aiohttp.TCPConnector):
     def __init__(self, *args, **kwargs):

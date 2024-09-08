@@ -1,14 +1,14 @@
 from xml.dom.minidom import Document
-import certifi
 from pymongo.mongo_client import MongoClient
 from datetime import datetime
 import os
 from typing import Union
+from datetime import timedelta
 from message_cryptography import  Cryptography
 
 # ----- /// MongoDB Connector /// -----
-Uri = os.getenv("MONGODB_URI")
-Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"]
+Uri = os.getenv("mongodb://localhost:27017/")
+Client = MongoClient(Uri,ssl=False)["Alan_the_Alarm"]
 
 now = datetime.now()
 
@@ -90,7 +90,7 @@ class mongo_ATA :
 
 
     @staticmethod
-    def Return_Time_to_Send(Discord_ID : str, Document_ID) -> Union[dict, None] : # type: ignore  
+    def Return_Time_to_Send(Discord_ID : str, Document_ID) -> str : # type: ignore  
 
         Discord_ID = str(Discord_ID)
 
@@ -103,18 +103,8 @@ class mongo_ATA :
             if last_message : 
 
                 last_message = str(last_message["Date_to_Send"])
-                last_message = datetime.strptime(last_message, "%d/%m %H:%M:%S")
 
                 return last_message # type: ignore
-
-            else : 
-                Client["Errors"].insert_one({
-                    "Discord_ID" : Discord_ID,
-                    "Error_Code" : 1,
-                    "Error" : "No messages to mail from this Discord_ID"
-                })
-
-                return None 
 
         except Exception as err :  
 
@@ -145,7 +135,8 @@ class mongo_ATA :
 
         try : 
 
-            send_at = mongo_ATA.Return_Time_to_Send(Discord_ID, Document_ID) # type: ignore
+            send_at_str = mongo_ATA.Return_Time_to_Send(Discord_ID, Document_ID) # type: ignore
+            send_at = datetime.strptime(send_at_str, "%d/%m %H:%M:%S")
 
             last_message = Client["An_Timers"].find_one({
                     "_id" : Document_ID, 
@@ -156,11 +147,17 @@ class mongo_ATA :
 
             if last_message : 
 
-                time = datetime.now()
-                time = datetime.strftime(time, "%d/%m %H:%M:%S")
-                 
-                if str(send_at) != time :   
+                current_time = datetime.now()
+                treshold = timedelta(seconds=5)
 
+                if not (send_at - treshold <= current_time <= send_at + treshold):
+                    Client["An_Timers"].update_one(
+                        {"_id" : Document_ID}, 
+                        {"$set" : {"Mailed" : True, 
+                                  "Late" : False}
+                                })
+
+                else :
                     Client["Errors"].insert_one({
                         "Error_Code" : 3, 
                         "Error" : "Too late" ,
@@ -176,13 +173,7 @@ class mongo_ATA :
                                    "Late" : datetime.strftime(send_at, "%d/%m %H:%M:%S")}  # type: ignore
                                 })
 
-                else : 
-                    print("Else") 
-                    Client["An_Timers"].update_one(
-                        {"_id" : Document_ID}, 
-                        {"$set" : {"Mailed" : True, 
-                                  "Late" : "False"}
-                                })
+
                 
         except Exception as e: 
             print(f"Error : {e}")
