@@ -3,7 +3,11 @@ from typing import Union
 
 
 class Cryptography:
-    key = Fernet.generate_key()
+    key = b''
+    with open('secret.key', 'rb') as key_file:
+        key = key_file.read()
+
+    # Criando a cipher suite com a chave carregada
     cipher_suite = Fernet(key)
 
     @staticmethod
@@ -11,17 +15,14 @@ class Cryptography:
         return Cryptography.cipher_suite.encrypt(message.encode())
 
     @staticmethod
-    def decrypt(message: bytes) -> Union[str, Exception]:
+    def decrypt(message) -> Union[str, Exception]:
         try:
             message = str(message)  # type: ignore
-            message = message[2:-1]
             message = Cryptography.cipher_suite.decrypt(message.encode()).decode()  # type: ignore
 
             return message  # type: ignore
 
         except Exception as e:
-            print("Error!")
             print(e)
-            print("Must insert bytes type")
-
             return e
+        

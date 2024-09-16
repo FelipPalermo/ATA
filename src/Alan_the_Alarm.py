@@ -1,3 +1,4 @@
+from time import strptime
 import discord
 from discord.ext import commands
 import os
@@ -8,6 +9,7 @@ import asyncio
 import re
 from datetime import datetime, timedelta
 from pymongo.mongo_client import MongoClient
+from message_cryptography import Cryptography
 from mongoDB import mongo_ATA
 
 # ----- /// TOKENS /// -----
@@ -66,13 +68,13 @@ async def alarm(ctx, *, time_message):
 
         now = datetime.now()
         future_time = now + timedelta(seconds=total_seconds)
-        formatted_future_time = future_time.strftime("%d/%m %H:%M:%S")
+        formatted_future_time = future_time.strftime("%d/%m/%Y %H:%M:%S")
 
         await ctx.send(f'Alarm set to : ({formatted_future_time}).')
         Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_future_time, message)
         await asyncio.sleep(total_seconds)
 
-        f_time = now.strftime("%d/%m %H:%M:%S")
+        f_time = now.strftime("%d/%m/%Y %H:%M")
         if message == "":
             await ctx.author.send("You have set an alarm for now.")
         else:
@@ -87,13 +89,13 @@ async def alarm(ctx, *, time_message):
 
         now = datetime.now()
         future_time = now + timedelta(seconds=total_seconds)
-        formatted_future_time = future_time.strftime("%d/%m %H:%M:%S")
+        formatted_future_time = future_time.strftime("%d/%m/%Y %H:%M:%S")
 
         await ctx.send(f'Alarm set to : ({formatted_future_time}).')
         Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_future_time, message)
         await asyncio.sleep(total_seconds)
 
-        f_time = now.strftime("%d/%m %H:%M")
+        f_time = now.strftime("%d/%m/%Y %H:%M")
         mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
         if message == "":
@@ -107,13 +109,13 @@ async def alarm(ctx, *, time_message):
         now = datetime.now()
 
         future_time = now + timedelta(seconds=time)
-        formatted_future_time = future_time.strftime("%d/%m %H:%M:%S")
+        formatted_future_time = future_time.strftime("%d/%m/%Y %H:%M:%S")
 
         await ctx.send(f'Alarm set to : ({formatted_future_time}).')
         Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_future_time, message)
         await asyncio.sleep(time)
 
-        f_time = now.strftime("%d/%m %H:%M:%S")
+        f_time = now.strftime("%d/%m/%Y %H:%M:%S")
         mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
         if message == "":
@@ -139,14 +141,14 @@ async def set(ctx, *, time_message):
     hour_input = datetime.strptime(time_message, "%H:%M:%S").replace(
         year=now.year, month=now.month, day=now.day
     )
-    formatted_hour = hour_input.strftime("%d/%m %H:%M:%S")
+    formatted_hour = hour_input.strftime("%d/%m/%Y %H:%M:%S")
     time_diff = (hour_input - now).total_seconds()
 
     if time_diff <= 0:
         await ctx.send("You cannot set an alarm for the past.")
         return
 
-    await ctx.send(f"Alarm set for: {formatted_hour}")
+    await ctx.send(f"Alarm set for : ({formatted_hour})")
     Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_hour, message)
     await asyncio.sleep(time_diff)
 
@@ -155,7 +157,7 @@ async def set(ctx, *, time_message):
     else:
         await ctx.author.send("You have set an alarm for now.")
 
-    f_time = now.strftime("%d/%m %H:%M:%S")
+    f_time = now.strftime("%d/%m/%Y %H:%M:%S")
     mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
 
@@ -183,8 +185,8 @@ async def setus(ctx, *, time_message):
     hour_input = datetime.strptime(time_message, "%I:%M:%S %p").replace(
         year=now.year, month=now.month, day=now.day
     )
-    formatted_hour = hour_input.strftime("%m/%d %I:%M %p")
-    await ctx.send(f"Alarm set for : {formatted_hour}")
+    formatted_hour = hour_input.strftime("%m/%d/%Y %I:%M %p")
+    await ctx.send(f"Alarm set for : ({formatted_hour})")
     Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_hour, message)
 
     time_diff = (hour_input - now).total_seconds()
@@ -195,7 +197,7 @@ async def setus(ctx, *, time_message):
     else:
         await ctx.author.send("You have set an alarm for now.")
 
-    f_time = now.strftime("%d/%m %H:%M:%S")
+    f_time = now.strftime("%d/%m/%Y %H:%M:%S")
     mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
 
@@ -236,13 +238,11 @@ async def clear(ctx, limit):
 @bot.command(name="count_messages")
 @commands.has_permissions(manage_messages=True)  # Requer permissão para gerenciar mensagens
 async def count_messages(ctx):
-    """Conta o número total de mensagens no canal atual."""
     total_messages = 0
     async for message in ctx.channel.history(limit=None):  # Itera sobre todas as mensagens
         total_messages += 1
     
     await ctx.send(f'O número total de mensagens no canal é: {total_messages}')
-
 
 
 # ----- /// tutorial /// -----
@@ -338,6 +338,35 @@ async def clear_error(ctx, error):
     else:
         await ctx.send("An error occurred while executing the command.")
 
+@bot.command(name="decode")
+async def decode(ctx) : 
+    alarms = mongo_ATA.active_anonymous_alarms()
+
+    now = datetime.now() 
+
+    await ctx.send("Decoding")
+
+    for i in alarms : 
+        print("ID : ", i['Discord_ID'])
+        print("Message : ", i['Message'].decode())
+
+        id = i['Discord_ID']
+        date_to_send  = datetime.strptime(i["Date_to_Send"], "%d/%m/%Y %H:%M:%S")
+
+        if date_to_send > now :
+
+            user = await bot.fetch_user(id)
+            await user.send("Menssagem depois de errado")
+
+
+
+@bot.event
+async def repeat_task():
+    await bot.wait_until_ready()  # Aguarda o bot estar pronto
+    while not bot.is_closed():
+        alarms = mongo_ATA.active_anonymous_alarms()
+        for alarm in alarms : 
+            pass  
 
 @bot.event
 async def on_ready():

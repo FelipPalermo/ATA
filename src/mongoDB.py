@@ -1,4 +1,5 @@
 from xml.dom.minidom import Document
+from more_itertools import last
 from pymongo.mongo_client import MongoClient
 from datetime import datetime
 import os
@@ -103,7 +104,6 @@ class mongo_ATA :
             if last_message : 
 
                 last_message = str(last_message["Date_to_Send"])
-
                 return last_message # type: ignore
 
         except Exception as err :  
@@ -129,63 +129,66 @@ class mongo_ATA :
 
 
     @staticmethod
-    def true_mailed(Discord_ID, time, Document_ID) -> Union[dict, None] : # type: ignore  
-
+    def true_mailed(Discord_ID, time, Document_ID) -> Union[dict, None]:  # type: ignore
         Discord_ID = str(Discord_ID)
+        send_at = None  # Inicializando send_at para garantir que ela existe
 
-        try : 
+        try:
+            send_at_str = mongo_ATA.Return_Time_to_Send(Discord_ID, Document_ID)  # type: ignore
 
-            send_at_str = mongo_ATA.Return_Time_to_Send(Discord_ID, Document_ID) # type: ignore
-            send_at = datetime.strptime(send_at_str, "%d/%m %H:%M:%S")
+            if send_at_str:
+                send_at = datetime.strptime(send_at_str, "%d/%m/%Y %H:%M:%S")
+            else:
+                raise ValueError("No valid send time found for this document.")
 
             last_message = Client["An_Timers"].find_one({
-                    "_id" : Document_ID, 
-                    "Discord_ID" : Discord_ID,
-                    "Mailed" : False
-                    })
+                "_id": Document_ID,
+                "Discord_ID": Discord_ID,
+                "Mailed": False
+            })
 
-
-            if last_message : 
-
+            if last_message:
                 current_time = datetime.now()
                 treshold = timedelta(seconds=5)
 
                 if not (send_at - treshold <= current_time <= send_at + treshold):
                     Client["An_Timers"].update_one(
-                        {"_id" : Document_ID}, 
-                        {"$set" : {"Mailed" : True, 
-                                  "Late" : False}
-                                })
-
-                else :
+                        {"_id": Document_ID},
+                        {"$set": {"Mailed": True, "Late": False}}
+                    )
+                else:
                     Client["Errors"].insert_one({
-                        "Error_Code" : 3, 
-                        "Error" : "Too late" ,
-                        "Discord_ID" : Discord_ID,
-                        "Late" : datetime.strftime(send_at, "%d/%m %H:%M:%S")}  # type: ignore
+                        "Error_Code": 3,
+                        "Error": "Too late",
+                        "Discord_ID": Discord_ID,
+                        "Late": datetime.strftime(send_at, "%d/%m/%Y %H:%M:%S")}  # type: ignore
                     )
 
                     Client["An_Timers"].update_one(
-                        {"_id" : Document_ID,
-                         "Discord_ID" : Discord_ID}, 
-
-                        {"$set" : {"Mailed" : True, 
-                                   "Late" : datetime.strftime(send_at, "%d/%m %H:%M:%S")}  # type: ignore
-                                })
-
-
-                
-        except Exception as e: 
-            print(f"Error : {e}")
-            Client["Errors"].insert_one({
-                        "Error_Code" : "Unknow", 
-                        "Error" : e,
-                        "Error_on" : Document_ID,
-                        "Discord_ID" : Discord_ID,
-                        "Late" : datetime.strftime(send_at, "%d/%m %H:%M:%S")} # type: ignore
+                        {"_id": Document_ID, "Discord_ID": Discord_ID},
+                        {"$set": {"Mailed": True, "Late": datetime.strftime(send_at, "%d/%m/%Y %H:%M:%S")}}  # type: ignore
                     )
 
-            return None 
+        except ValueError as ve:
+            print(f"ValueError: {ve}")
+            Client["Errors"].insert_one({
+                "Error_Code": 2,
+                "Error": str(ve),
+                "Discord_ID": Discord_ID,
+                "Late": datetime.now().strftime("%d/%m/%Y %H:%M:%S")  # Registro do erro com hora atual
+            })
+
+        except Exception as e:
+            print(f"Error: {e}")
+            Client["Errors"].insert_one({
+                "Error_Code": "Unknown",
+                "Error": str(e),
+                "Error_on": Document_ID,
+                "Discord_ID": Discord_ID,
+                "Late": datetime.now().strftime("%d/%m/%Y %H:%M:%S")}  # type: ignore
+            )
+
+        return None
 
     @staticmethod
     def active_alarms(Discord_ID) : 
@@ -195,3 +198,13 @@ class mongo_ATA :
         })
 
         return alarms
+
+    @staticmethod
+    def active_anonymous_alarms() : 
+        alarms = Client["An_Timers"].find({
+        "Mailed" : False 
+        })
+
+        return alarms
+
+    
