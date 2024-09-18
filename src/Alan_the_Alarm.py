@@ -37,8 +37,9 @@ intents.guilds = True
 bot = commands.Bot(command_prefix='alarm ', intents=intents)
 
 
+# ----- /// /// /// -----
 # ----- /// Bot Commands /// -----
-
+# ----- /// /// /// -----
 
 # ----- /// to /// -----
 @bot.command(name="to")
@@ -235,6 +236,8 @@ async def clear(ctx, limit):
     deleted = await ctx.channel.purge(limit=max_limit)
     await ctx.send(f'{len(deleted)} mensagens foram excluídas.', delete_after=5)
 
+
+# ----- /// Contar menssagens /// -----
 @bot.command(name="count_messages")
 @commands.has_permissions(manage_messages=True)  # Requer permissão para gerenciar mensagens
 async def count_messages(ctx):
@@ -309,6 +312,7 @@ async def on_reaction_add(reaction, user):
         embed.add_field(name="Data and Security", value="Although the bot doesn't handle sensitive data, we rely on strong security measures. All messages are stored with encryption.", inline=False)
         embed.add_field(name="How was ATA made?", value="ATA was built using Python, MongoDB, and discord.py.", inline=False)
         embed.add_field(name="Why?", value="ATA is a utility bot designed to help solve everyday problems.", inline=False)
+        embed.add_field(name="Creators", value="Felipe Palermo", inline=False)
         await message.edit(embed=embed)
 
     elif reaction.emoji == "🏠" : 
@@ -329,6 +333,7 @@ async def on_reaction_add(reaction, user):
 
         message = await message.edit(embed=embed)
 
+
 @clear.error
 async def clear_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
@@ -338,28 +343,8 @@ async def clear_error(ctx, error):
     else:
         await ctx.send("An error occurred while executing the command.")
 
-@bot.command(name="decode")
-async def decode(ctx) : 
-    alarms = mongo_ATA.active_anonymous_alarms()
 
-    now = datetime.now() 
-
-    await ctx.send("Decoding")
-
-    for i in alarms : 
-        print("ID : ", i['Discord_ID'])
-        print("Message : ", i['Message'].decode())
-
-        id = i['Discord_ID']
-        date_to_send  = datetime.strptime(i["Date_to_Send"], "%d/%m/%Y %H:%M:%S")
-
-        if date_to_send > now :
-
-            user = await bot.fetch_user(id)
-            await user.send("Menssagem depois de errado")
-
-
-
+# ----- /// Verificar envio pendente /// ----- 
 @bot.event
 async def repeat_task():
     await bot.wait_until_ready()  # Aguarda o bot estar pronto
@@ -368,9 +353,12 @@ async def repeat_task():
         for alarm in alarms : 
             pass  
 
+# TODO : Verificar arquivos que nao foram entregues
+# durante o tempo limite 
+
+
 @bot.event
 async def on_ready():
-    print(f"{__name__} is running...")
     print(f'Logged in as {bot.user.name}')
 
 if __name__ == "__main__":

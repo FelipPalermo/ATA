@@ -47,12 +47,11 @@ class mongo_ATA :
         if Discord_ID not in Signed_Users : 
 
             Client[Discord_ID].insert_one({
-                "_id" : Discord_ID,
+                "Discord_ID" : Discord_ID,
                 "Email" : email
             })
             
         else : 
-
             #TODO colocar para o bot falar que já existe um registro para esse ID de discord
             print("Esse registro já existe")
 
