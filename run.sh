@@ -15,7 +15,7 @@ source venv/bin/activate
 
 if [ -f src/Alan_the_alarm.py ]; then
 	echo "Iniciando Bot" 
-	python3 src/Alan_the_alarm.py
+	python3 src/Main.py
 
 else 
 	echo "Arquivo nao encontrado" 

@@ -2,29 +2,14 @@ from time import strptime
 import discord
 from discord.ext import commands
 import os
-import ssl
-import certifi
-import aiohttp
 import asyncio
 import re
 from datetime import datetime, timedelta
-from pymongo.mongo_client import MongoClient
 from message_cryptography import Cryptography
 from mongoDB import mongo_ATA
 
-# ----- /// TOKENS /// -----
-TOKEN = os.getenv("ATA_TOKEN")
-Uri = os.getenv("MONGODB_URI")
-
 # ----- /// Connections /// -----
-ssl_context = ssl.create_default_context(cafile=certifi.where())
-Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"] 
-
-
-class CustomConnector(aiohttp.TCPConnector):
-    def __init__(self, *args, **kwargs):
-        kwargs['ssl'] = ssl_context
-        super().__init__(*args, **kwargs)
+TOKEN = os.getenv("ATA_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -37,11 +22,36 @@ bot = commands.Bot(command_prefix='alarm ', intents=intents)
 # ----- /// Bot Commands /// -----
 # ----- /// /// /// -----
 
+# ----- /// create user /// ----- 
+@bot.command(name="register")
+async def register(ctx, gmt : str) -> None : 
+    result = mongo_ATA.create_user(str(ctx.author.id), gmt)
+    
+    if result is None :
+        await ctx.send("User sucefully created!")
+
+    elif result == "err1" : 
+        await ctx.send("User already exists")
+
+    elif result == "err2" : 
+        await ctx.send("Incorrect GMT format use : ( GMT(+|-)X )")
+
+# ----- /// Delete user /// -----
+@bot.command(name="delete_user")
+async def delete_user(ctx) : 
+
+    result = mongo_ATA.delete_user(ctx.author.id)
+
+    if result == "deleted" : 
+        await ctx.send("User sucefully deleted")
+
+    elif result == "err3" : 
+        await ctx.send("User do not exists")
 
 # ----- /// now /// -----
-@bot.command(name="now")
+
 async def now(ctx) : 
-    await ctx.send(datetime.now())
+    await ctx.send(datetime.now(mongo_ATA.GMT(ctx.author.id)))
 
 # ----- /// to /// -----
 @bot.command(name="to")

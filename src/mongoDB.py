@@ -10,6 +10,7 @@ from message_cryptography import  Cryptography
 import certifi
 import ssl
 import pytz
+import re 
 
 # ----- /// MongoDB Connector /// -----
 Uri = os.getenv("MONGODB_URI")
@@ -18,31 +19,51 @@ Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"]
 
 now = datetime.now()
 
-# banco de alarmes ["Alarms"] 
-# banco de registros ["User_Info"]
-
-
 class mongo_ATA :  
 
     # ----- /// Create User /// -----
     @staticmethod
     def create_user(Discord_ID : str, GMT : str) -> Union[None, str]  : 
+        padrao = r"^GMT([+-])([0-9]|1[0-2])$"
+        GMT = GMT.upper() 
 
-       if Client["User_Info"].find_one({
-           "Discord_ID" : Discord_ID
-       }) is None : 
+        if re.match(padrao, GMT):
 
-        document = {
-            "Discord_ID" : Discord_ID,
-            "GMT" : GMT, 
-            "Alarm_Sound" : ""
-        } 
+            if Client["User_Info"].find_one({
+                "Discord_ID" : Discord_ID
+            }) is None : 
 
-        Client["User_Info"].insert_one(document)
+                Client["User_Info"].insert_one({
+                    "Discord_ID" : Discord_ID,
+                    "GMT" : GMT, 
+                    "Alarm_Sound" : ""
+                } )
+            
+            else : 
+                # pattern dont match
+                return "err1"
+        else : 
+            # user already exists
+            return "err2"
 
-       else : 
-            return "Already registred"
+    @staticmethod
+    def delete_user(Discord_ID) -> str : 
 
+        Discord_ID = str(Discord_ID)
+
+        result = Client["User_Info"].find_one({
+            "Discord_ID" : Discord_ID
+        })
+
+        if result is not None : 
+            Client["User_Info"].delete_one({
+                "Discord_ID" : Discord_ID
+            })
+
+            return "deleted" 
+
+        else : 
+            return "err3"
 
     # ----- /// Insert timer /// -----  
     @staticmethod
@@ -177,7 +198,7 @@ class mongo_ATA :
 
         return alarms
 
-
+    # ----- /// Return GMT /// -----
     @staticmethod
     def Return_GMT(Discord_ID) -> str : 
 
@@ -196,9 +217,10 @@ class mongo_ATA :
         except Exception as e : 
             print(e)
             return "None"
-    
+
+    # ----- /// Now GMT /// ----- 
     @staticmethod
-    def Now_GMT(GMT : str) : 
+    def GMT(Discord_ID) : 
 
         gmtdict = {
             "GMT+0": pytz.timezone("Etc/GMT"),
@@ -228,4 +250,5 @@ class mongo_ATA :
             "GMT-12": pytz.timezone("Etc/GMT+12"),
         }
 
-        return datetime.now(gmtdict[GMT])
+        GMT = mongo_ATA.Return_GMT(str(Discord_ID))
+        return gmtdict[GMT]
