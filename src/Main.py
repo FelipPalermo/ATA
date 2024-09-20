@@ -49,9 +49,9 @@ async def delete_user(ctx) :
         await ctx.send("User do not exists")
 
 # ----- /// now /// -----
-
+@bot.command(name="now")
 async def now(ctx) : 
-    await ctx.send(datetime.now(mongo_ATA.GMT(ctx.author.id)))
+    await ctx.send(mongo_ATA.now_GMT(ctx.author.id))
 
 # ----- /// to /// -----
 @bot.command(name="to")
@@ -79,7 +79,7 @@ async def alarm(ctx, *, time_message):
         h, m, s = map(int, time.split(':'))
         total_seconds = h * 3600 + m * 60 + s
 
-        now = datetime.now()
+        now = mongo_ATA.now_GMT(ctx.author.id)
         future_time = now + timedelta(seconds=total_seconds)
         formatted_future_time = future_time.strftime("%d/%m/%Y %H:%M:%S")
 
@@ -87,7 +87,7 @@ async def alarm(ctx, *, time_message):
         Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_future_time, message)
         await asyncio.sleep(total_seconds)
 
-        f_time = now.strftime("%d/%m/%Y %H:%M")
+        f_time = mongo_ATA.now_GMT(ctx.author.id).strftime("%d/%m/%Y %H:%M")
         if message == "":
             await ctx.author.send("You have set an alarm for now.")
         else:
@@ -100,7 +100,7 @@ async def alarm(ctx, *, time_message):
         m, s = map(int, time.split(':'))
         total_seconds = m * 60 + s
 
-        now = datetime.now()
+        now = mongo_ATA.now_GMT(ctx.author.id)
         future_time = now + timedelta(seconds=total_seconds)
         formatted_future_time = future_time.strftime("%d/%m/%Y %H:%M:%S")
 
@@ -108,7 +108,7 @@ async def alarm(ctx, *, time_message):
         Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_future_time, message)
         await asyncio.sleep(total_seconds)
 
-        f_time = now.strftime("%d/%m/%Y %H:%M")
+        f_time = mongo_ATA.now_GMT(ctx.author.id).strftime("%d/%m/%Y %H:%M")
         mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
         if message == "":
@@ -119,7 +119,7 @@ async def alarm(ctx, *, time_message):
     # ----- /// PATTERN 3 00 // -----
     elif pattern3.match(time):
         time = int(time)
-        now = datetime.now()
+        now = mongo_ATA.now_GMT(ctx.author.id)
 
         future_time = now + timedelta(seconds=time)
         formatted_future_time = future_time.strftime("%d/%m/%Y %H:%M:%S")
@@ -128,7 +128,7 @@ async def alarm(ctx, *, time_message):
         Document_ID = mongo_ATA.insert_timer(str(ctx.author.id), formatted_future_time, message)
         await asyncio.sleep(time)
 
-        f_time = now.strftime("%d/%m/%Y %H:%M:%S")
+        f_time = mongo_ATA.now_GMT(ctx.author.id).strftime("%d/%m/%Y %H:%M:%S")
         mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
         if message == "":
@@ -150,7 +150,7 @@ async def set(ctx, *, time_message):
     except Exception as e:
         pass
 
-    now = datetime.now()
+    now = mongo_ATA.now_GMT(ctx.author.id) 
     hour_input = datetime.strptime(time_message, "%H:%M:%S").replace(
         year=now.year, month=now.month, day=now.day
     )
@@ -170,7 +170,7 @@ async def set(ctx, *, time_message):
     else:
         await ctx.author.send("You have set an alarm for now.")
 
-    f_time = now.strftime("%d/%m/%Y %H:%M:%S")
+    f_time = mongo_ATA.now_GMT(ctx.author.id).strftime("%d/%m/%Y %H:%M:%S")
     mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
 
@@ -187,7 +187,7 @@ async def setus(ctx, *, time_message):
     except Exception as e:
         pass
 
-    now = datetime.now()
+    now = mongo_ATA.now_GMT(ctx.author.id)
     pattern = r"^(1[0-2]|0?[1-9]):([0-5][0-9]):([0-5][0-9])\s?(AM|PM)$"
     match = re.match(pattern, time_message, re.IGNORECASE)
 
@@ -210,7 +210,7 @@ async def setus(ctx, *, time_message):
     else:
         await ctx.author.send("You have set an alarm for now.")
 
-    f_time = now.strftime("%d/%m/%Y %H:%M:%S")
+    f_time = mongo_ATA.now_GMT(ctx.author.id).strftime("%d/%m/%Y %H:%M:%S")
     mongo_ATA.true_mailed(str(ctx.author.id), f_time, Document_ID)
 
 

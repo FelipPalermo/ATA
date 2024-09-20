@@ -146,7 +146,7 @@ class mongo_ATA :
             })
 
             if last_message:
-                current_time = datetime.now()
+                current_time = mongo_ATA.now_GMT(Discord_ID)
                 treshold = timedelta(seconds=5)
 
                 if not (send_at - treshold <= current_time <= send_at + treshold):
@@ -191,7 +191,7 @@ class mongo_ATA :
     # ----- /// Active alarms /// -----
     @staticmethod
     def active_alarms(Discord_ID) : 
-        alarms = Client["An_Timers"].find({
+        alarms = Client["Alarms"].find({
         "Discord_ID" :str(Discord_ID),
         "Mailed" : False 
         })
@@ -252,3 +252,7 @@ class mongo_ATA :
 
         GMT = mongo_ATA.Return_GMT(str(Discord_ID))
         return gmtdict[GMT]
+
+    @staticmethod
+    def now_GMT(Discord_ID) : 
+        return datetime.now(mongo_ATA.GMT(str(Discord_ID)))
