@@ -6,10 +6,13 @@ import os
 from typing import Union
 from datetime import timedelta
 from message_cryptography import  Cryptography
+import certifi
+import ssl
 
 # ----- /// MongoDB Connector /// -----
-Uri = os.getenv("mongodb://localhost:27017/")
-Client = MongoClient(Uri,ssl=False)["Alan_the_Alarm"]
+Uri = os.getenv("MONGODB_URI")
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"] 
 
 now = datetime.now()
 

@@ -14,14 +14,11 @@ from mongoDB import mongo_ATA
 
 # ----- /// TOKENS /// -----
 TOKEN = os.getenv("ATA_TOKEN")
-Uri = os.getenv("mongodb://localhost:27017/")
+Uri = os.getenv("MONGODB_URI")
 
 # ----- /// Connections /// -----
-Client = MongoClient(Uri, ssl=False)["Alan_the_Alarm"]
 ssl_context = ssl.create_default_context(cafile=certifi.where())
-
-# se conectar com cloud precisa do tlsCAFile e nao pode ter ssl=False 
-# Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"] 
+Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"] 
 
 
 class CustomConnector(aiohttp.TCPConnector):
@@ -36,10 +33,14 @@ intents.guilds = True
 
 bot = commands.Bot(command_prefix='alarm ', intents=intents)
 
-
 # ----- /// /// /// -----
 # ----- /// Bot Commands /// -----
 # ----- /// /// /// -----
+
+# ----- /// now /// -----
+@bot.command(name="now")
+async def now(ctx) : 
+    await ctx.send(datetime.now())
 
 # ----- /// to /// -----
 @bot.command(name="to")
