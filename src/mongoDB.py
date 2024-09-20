@@ -1,4 +1,5 @@
 from xml.dom.minidom import Document
+import bson
 from more_itertools import last
 from pymongo.mongo_client import MongoClient
 from datetime import datetime
@@ -8,6 +9,7 @@ from datetime import timedelta
 from message_cryptography import  Cryptography
 import certifi
 import ssl
+import pytz
 
 # ----- /// MongoDB Connector /// -----
 Uri = os.getenv("MONGODB_URI")
@@ -16,53 +18,52 @@ Client = MongoClient(Uri, tlsCAFile=certifi.where())["Alan_the_Alarm"]
 
 now = datetime.now()
 
+# banco de alarmes ["Alarms"] 
+# banco de registros ["User_Info"]
+
+
 class mongo_ATA :  
 
+    # ----- /// Create User /// -----
+    @staticmethod
+    def create_user(Discord_ID : str, GMT : str) -> Union[None, str]  : 
+
+       if Client["User_Info"].find_one({
+           "Discord_ID" : Discord_ID
+       }) is None : 
+
+        document = {
+            "Discord_ID" : Discord_ID,
+            "GMT" : GMT, 
+            "Alarm_Sound" : ""
+        } 
+
+        Client["User_Info"].insert_one(document)
+
+       else : 
+            return "Already registred"
+
+
+    # ----- /// Insert timer /// -----  
     @staticmethod
     def insert_timer(Discord_ID, date_to_send, message) : 
 
         Discord_ID = str(Discord_ID)
-
         now = datetime.now()
-        collection_name = Discord_ID
+
         document = {
             "Discord_ID": Discord_ID,
             "Date_to_Send": date_to_send,
             "Created_At": now.strftime("%d-%m-%Y %H:%M"),
+            "GMT" : None,
             "Message": Cryptography.encrypt(message),
             "Mailed": False,
             "Late" : "" 
         }
         
-        if collection_name in Client.list_collection_names():
-            result = Client[collection_name].insert_one(document)
-        else:
-            result = Client["An_Timers"].insert_one(document)
-        
+        result = Client["Alarms"].insert_one(document)
         return result.inserted_id
         
-    @staticmethod
-    def create_profile(Discord_ID, email) : 
-
-        Discord_ID = str(Discord_ID)
-        Signed_Users = Client.list_collection_names()
-
-        if Discord_ID not in Signed_Users : 
-
-            Client[Discord_ID].insert_one({
-                "Discord_ID" : Discord_ID,
-                "Email" : email
-            })
-            
-        else : 
-            #TODO colocar para o bot falar que já existe um registro para esse ID de discord
-            print("Esse registro já existe")
-
-    @staticmethod
-    def Change_Email(Discord_ID, email) : 
-        Discord_ID = str(Discord_ID)
-        if Discord_ID in Client.list_collection_names() : 
-            Client[Discord_ID].update_one({"_id" : Discord_ID}, {"$set" : {"Email" : email}} )
 
     @staticmethod
     def Anonymous_send_not_mailed() -> None : 
@@ -74,24 +75,8 @@ class mongo_ATA :
             if not document.get("Mailed", True):
                 db["An_Timers"].delete_one({"_id": document["_id"]})
 
-    @staticmethod
-    def Signed_send_not_mailed() -> None : 
-       # SIGNED = PEOPLE WHO HAVE EMAIL IN THE BOT 
 
-        db = Client
-        Signed_Users = db.list_collection_names()
-        
-        for collection_name in Signed_Users: 
-            
-            if collection_name != "An_Timers":
-                signed_users_document = db[collection_name].find()
-                
-                for document in signed_users_document: 
-                    
-                    if not document.get("Mailed", True): 
-                        db[collection_name].delete_one({"_id": document["_id"]})
-
-
+    # ----- /// Return time to send /// ----
     @staticmethod
     def Return_Time_to_Send(Discord_ID : str, Document_ID) -> str : # type: ignore  
 
@@ -118,18 +103,8 @@ class mongo_ATA :
 
             raise TypeError("Could not complete transaction due incorrect input")
 
-        # Implementar verificacao de tipo junto com a classeu
-        # para nao interromper o tempo de execucao 
-        """
-        a = Return_Time_to_Send("350364616657862679") if isinstance(Return_Time_to_Send("350364616657862679"), dict) else None  
-        if isinstance(a, dict) : 
-            ...
-        else : 
-            print("Nao")
-        """
-        # ----- /// -----
 
-
+    # ----- /// True mailed /// -----
     @staticmethod
     def true_mailed(Discord_ID, time, Document_ID) -> Union[dict, None]:  # type: ignore
         Discord_ID = str(Discord_ID)
@@ -192,6 +167,7 @@ class mongo_ATA :
 
         return None
 
+    # ----- /// Active alarms /// -----
     @staticmethod
     def active_alarms(Discord_ID) : 
         alarms = Client["An_Timers"].find({
@@ -201,12 +177,55 @@ class mongo_ATA :
 
         return alarms
 
+
     @staticmethod
-    def active_anonymous_alarms() : 
-        alarms = Client["An_Timers"].find({
-        "Mailed" : False 
-        })
+    def Return_GMT(Discord_ID) -> str : 
 
-        return alarms
+        try : 
+            register = Client["User_Info"].find_one({
+                "Discord_ID" : str(Discord_ID)
+            })
 
+            if register is not None :  
+                return register["GMT"]
+
+            else :
+                print("This register does not have an GMT") 
+                return "None" 
+
+        except Exception as e : 
+            print(e)
+            return "None"
     
+    @staticmethod
+    def Now_GMT(GMT : str) : 
+
+        gmtdict = {
+            "GMT+0": pytz.timezone("Etc/GMT"),
+            "GMT+1": pytz.timezone("Etc/GMT-1"),
+            "GMT+2": pytz.timezone("Etc/GMT-2"),
+            "GMT+3": pytz.timezone("Etc/GMT-3"),
+            "GMT+4": pytz.timezone("Etc/GMT-4"),
+            "GMT+5": pytz.timezone("Etc/GMT-5"),
+            "GMT+6": pytz.timezone("Etc/GMT-6"),
+            "GMT+7": pytz.timezone("Etc/GMT-7"),
+            "GMT+8": pytz.timezone("Etc/GMT-8"),
+            "GMT+9": pytz.timezone("Etc/GMT-9"),
+            "GMT+10": pytz.timezone("Etc/GMT-10"),
+            "GMT+11": pytz.timezone("Etc/GMT-11"),
+            "GMT+12": pytz.timezone("Etc/GMT-12"),
+            "GMT-1": pytz.timezone("Etc/GMT+1"),
+            "GMT-2": pytz.timezone("Etc/GMT+2"),
+            "GMT-3": pytz.timezone("Etc/GMT+3"),
+            "GMT-4": pytz.timezone("Etc/GMT+4"),
+            "GMT-5": pytz.timezone("Etc/GMT+5"),
+            "GMT-6": pytz.timezone("Etc/GMT+6"),
+            "GMT-7": pytz.timezone("Etc/GMT+7"),
+            "GMT-8": pytz.timezone("Etc/GMT+8"),
+            "GMT-9": pytz.timezone("Etc/GMT+9"),
+            "GMT-10": pytz.timezone("Etc/GMT+10"),
+            "GMT-11": pytz.timezone("Etc/GMT+11"),
+            "GMT-12": pytz.timezone("Etc/GMT+12"),
+        }
+
+        return datetime.now(gmtdict[GMT])
