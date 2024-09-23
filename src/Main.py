@@ -106,7 +106,7 @@ async def alarm(ctx, *, time_message):
     elif pattern_s.match(time):
         h, m, s = 0, 0, int(time)
     else:
-        await ctx.send("Formato inválido. Use HH:MM:SS, HH MM SS, MM:SS, MM SS, ou SS.")
+        await ctx.send("Invalid format please use HH:MM:SS, HH MM SS, MM:SS, MM SS, or SS.")
         return
 
     total_seconds = time_to_seconds(h, m, s)
@@ -172,7 +172,7 @@ async def setus(ctx, *, time_message: str):
 
     pattern = r"^(1[0-2]|0?[1-9]):([0-5][0-9]):([0-5][0-9])\s?(AM|PM)$"
     if not re.match(pattern, time_message, re.IGNORECASE):
-        await ctx.send("Incorrect format, use HH:MM:SS AM/PM")
+        await ctx.send("Invalid format, please use HH:MM:SS AM/PM")
         return
 
     user_timezone = mongo_ATA.GMT(ctx.author.id)
@@ -234,7 +234,7 @@ async def count_messages(ctx):
     async for message in ctx.channel.history(limit=None):  # Itera sobre todas as mensagens
         total_messages += 1
     
-    await ctx.send(f'O número total de mensagens no canal é: {total_messages}')
+    await ctx.send(f'Total number of messages in this channel is : {total_messages}')
 
 # ----- /// tutorial /// -----
 @bot.command(name='tutorial')
