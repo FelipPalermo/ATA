@@ -1,80 +1,91 @@
 # Alan the Alarm ⏰
 
 ![Descrição da imagem](https://drive.google.com/uc?export=view&id=1tBPMNA9rmN9P8VIXUJBgrUB9F3iAvP0l)
-Alan the Alarm is a Discord bot designed to help you set alarms and reminders directly in your Discord server. With various commands, Alan can be used as a countdown timer, set alarms for specific times, and even display active alarms.
 
-## Features ✨
+**Alan the Alarm** is a Discord bot that allows you to create alarms, manage time zones, and use useful commands in Discord text channels.
 
-- Set alarms for specific times or countdowns ⏳
-- Choose between 24-hour format or 12-hour AM/PM format 🕑
-- Receive alarm notifications via private messages 🔔
-- Manage and view active alarms with ease 👁
-- Admin tools to manage and clear chat messages 🧹
-- Tutorial command to guide users on how to use the bot 📚
+## Features
 
-## Commands 📝
+- Countdown alarm creation
+- Set alarms for specific times
+- Support for time zones (GMT)
+- Commands to manage users and alarms
+- View active alarms
+- Message administration commands
 
-- **`alarm set HH:MM:SS ; message`**  
-  Set an alarm for a specific time in 24-hour format. The optional `message` will be sent when the alarm goes off.  
-  Example: `alarm set 15:45:00 ; Meeting with team`
-  
-- **`alarm setus HH:MM:SS AM/PM ; message`**  
-  Set an alarm using the 12-hour AM/PM format.  
-  Example: `alarm setus 02:30:00 PM ; Lunch break`
-  
-- **`alarm to HH:MM:SS ; message`**  
-  Set a countdown timer that will go off after the specified time.  
-  Example: `alarm to 00:30:00 ; Break time over`
+## Installation
 
-- **`alarm active`**  
-  View all your active alarms.
+1. Clone this repository:
+    ```bash
+    git clone https://github.com/your-username/ata-alarm-bot.git
+    ```
 
-- **`alarm count_messages`**  
-  Count the total number of messages in the current channel.
+2. Install the dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-- **`alarm clear_messages <number>`**  
-  Admin-only command to clear a specific number of messages from the channel.
+3. `bash` : Set your `Discord TOKEN` and your `MongoDB token` environment variable with your bot token:
+    ```bash
+    export ATA_TOKEN="your-token-here"
+    export MONGODB_URI="your-token-here"
+    ```
+    `zshrc` :
+	```
+	echo "export ATA_TOKEN="your-token-here" >> ~/.zshrc
+	echo "export MONGODB_URI=your-token-here" >> ~/.zshrc
+ 	source ~/.zshrc
+	```
 
-- **`alarm tutorial`**  
-  Displays an interactive tutorial to help you understand how to use Alan the Alarm.
+5. Run the bot `bash` :
+    ```bash
+    python bot.py
+    ```
+    `zshrc` :
+   ```
+   ./run.sh
+   ```
 
-## How to Install 🛠
+## Commands
 
-1. Clone this repository :
-   ```bash
-   git clone https://github.com/yourusername/alan-the-alarm.git
+### Tutorial
+- `alarm tutorial` : Displays an interactive tutorial with information about the bot's usage.
 
+### User
 
-2. Install Dependencies :
-   ```bash
-   pip install -r requirements.txt
-  
-3. Set up your environment variables in a .env file : 
-  ```bash
-   ATA_TOKEN=your_discord_bot_token
-   MONGODB_URI=your_mongo_db_uri
-  ```
+- `alarm register (gmt)` : Registers the user with a specified time zone. Example: `alarm register GMT-3`
+- `alarm delete_user` : Deletes the user.
+- `alarm change_gmt (gmt)` : Changes the user's time zone. Example: `alarm change_gmt GMT-2`
+- `alarm now` : Displays the current time in 24-hour format.
+- `alarm nowus` : Displays the current time in 12-hour format (AM/PM).
 
-4. Run the bot :
-```bash 
-  ./run.sh
-```
+### Alarms
 
-Dependencies 📦
+- `alarm to HH:MM:SS ; message` : Sets an alarm for a specific amount of time from now.
+  - Example : `alarm to 01:30:00 ; 1 hour and 30 minutes reminder`
+- `alarm set HH:MM:SS ; message` : Sets an alarm for a specific time in 24-hour format.
+  - Example : `alarm set 14:30:00 ; meeting reminder`
+- `alarm setus HH:MM:SS AM/PM ; message` : Sets an alarm for a specific time in 12-hour format.
+  - Example : `alarm setus 02:30:00 PM ; meeting reminder`
+- `alarm active` : Displays all active alarms for the user.
 
-	•	discord.py: Python library for the Discord API
-	•	pymongo: To store and manage alarms in MongoDB
-	•	aiohttp: For asynchronous requests
-	•	datetime: To handle time-based functionalities
-	•	re: For regex-based parsing of time inputs
-	•	certifi: For SSL context in secure connections
+### Message Administration
 
-License 📄
+- `alarm count_messages` : Counts the total number of messages in the current channel.
+- `alarm clear_messages (number)` : Deletes a specified number of messages in the current channel (admin privileges required).
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Security
 
-Contributions 🤝
+- All data is handled with care and security, being stored in an encrypted format in the database.
 
-Feel free to submit pull requests, report bugs, or suggest features via GitHub Issues. Contributions are welcome!
+## License
 
+This project is licensed under the [MIT License](LICENSE).
 
+## Contribution
+
+Contributions are welcome! Please feel free to open issues or pull requests.
+
+---
+
+Developed by [Felipe Palermo](https://github.com/FelipPalermo)
