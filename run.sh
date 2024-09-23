@@ -13,7 +13,7 @@ trap stop_bot SIGINT
 
 source venv/bin/activate
 
-if [ -f src/Alan_the_alarm.py ]; then
+if [ -f src/Main.py ]; then
 	echo "Iniciando Bot" 
 	python3 src/Main.py
 
